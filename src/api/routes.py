@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename
 import os
+import requests
 
-from text_processing import TextPreprocessor, ParagraphAnalyzer
+from text_processing import TextPreprocessor, ParagraphSummarizer
 from annotation import AnnotationDetector, FigureMapper
 
 api = Blueprint('api', __name__)
@@ -23,18 +24,22 @@ def process_pdf():
         
         # Process the PDF
         text_processor = TextPreprocessor()
-        paragraph_analyzer = ParagraphAnalyzer()
+        paragraph_summarizer = ParagraphSummarizer()
         
         # Text processing
-        extracted_text = text_processor.extract_text(filepath)
-        processed_text = text_processor.preprocess(extracted_text)
-        paragraphs = paragraph_analyzer.analyze(processed_text)
+        extracted_data : dict = text_processor.extract_json_via_ocr_server(filepath)
+        processed_data = text_processor.preprocess(extracted_data)  # gather text from json, return figures and annotations
+        #paragraphs =
+        #annotations =
+        #figures = 
+
+        summarized_paragraphs = paragraph_summarizer.analyze(processed_data)
         
         # Annotation processing
-        annotation_detector = AnnotationDetector()
+        annotation_detector = AnnotationDetector()  # assumed to be aggregated in text processing
         figure_mapper = FigureMapper()
         
-        annotations = annotation_detector.detect(processed_text)
+        annotations = annotation_detector.detect(processed_data)
         figure_mappings = figure_mapper.map_figures(annotations, filepath)
         
         return jsonify({

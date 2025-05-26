@@ -1,0 +1,28 @@
+# Ignore virtual environment
+ocr_env/
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.so
+
+# Logs
+*.log
+
+# MacOS / Linux / Windows
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebooks Checkpoints
+.ipynb_checkpoints/
+
+# VS Code settings
+.vscode/
+
+# Python environment files
+*.env
+*.venv
+*.egg-info/
+
+# Others
+*.sqlite3

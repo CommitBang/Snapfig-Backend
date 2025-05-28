@@ -3,3 +3,8 @@ paddleocr
 paddlepaddle
 PyMuPDF
 Pillow
+numpy
+transformers
+torch
+accelerate
+bitsandbytes

@@ -21,3 +21,6 @@ API_PREFIX = f'/api/{API_VERSION}'
 LOG_LEVEL = 'INFO'
 LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 LOG_FILE = 'app.log' 
+
+# must validate this to correctly route to ocr service(currently set to local desktop not lab server)
+OCR_SERVICE_URL = "http://localhost:5001/ocr"

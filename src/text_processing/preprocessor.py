@@ -1,46 +1,45 @@
-# preprocessor.py
+# text_processing/preprocessor.py
 import re
-from typing import List, Dict
-from text_processing.paragraph import ParagraphSummarizer
-import requests
+from typing import List, Dict, Any
 
 class TextPreprocessor:
-    def __init__(self):
-        self.summarizer = ParagraphSummarizer()  # initialize summarizer
-
-    # text cleaning 
     def clean_text(self, text: str) -> str:
-        text = re.sub(r'-\n', '', text)             # whitespace removal 
-        text = re.sub(r'\n+', '\n\n', text)         # double spacing for each paragraph
-        text = re.sub(r'[^\x00-\x7F]+', ' ', text)  # non-ascii removal
-        return text.strip()
+        text = re.sub(r'-\n', '', text)
+        text = re.sub(r'\s*\n\s*', '\n', text).strip()
 
-    def extract_paragraphs(self, text: str) -> List[str]:
-        cleaned = self.clean_text(text)
-        return self.summarizer.split_into_paragraphs(cleaned)
+        # text = re.sub(r'[^\x00-\x7F]+', ' ', text) m
+        return text
 
-    def summarize_paragraphs(self, paragraphs: List[str]) -> List[str]:
-        return self.summarizer.summarize_paragraphs(paragraphs)
-
-    def preprocess_and_summarize(self, page_text: str) -> Dict:
-        paragraphs = self.extract_paragraphs(page_text)
-        summaries = self.summarize_paragraphs(paragraphs)
-        return {  # may need to connect to annotations.
-            "paragraphs": paragraphs,
-            "summaries": summaries
+    # transforms the raw OCR JSON into a standardized structure for the application.
+    def preprocess(self, raw_ocr_json: Dict[str, Any]) -> Dict[str, Any]:
+        processed_data = {
+            "page_count": raw_ocr_json.get("page_count", 0),
+            "page_dimensions": {},
+            "pages": {}
         }
-    
-    def preprocess(self, text_json : dict):
-        return 
-
-    def extract_json_via_ocr_server(self, pdf_path):
-        ocr_url = "http://localhost:5001/ocr"  # or ngrok url
-        with open(pdf_path, 'rb') as f:
-            files = {'file': f}
-            response = requests.post(ocr_url, files=files)
         
-        if response.status_code == 200:
-            return response.json() 
-        else:
-            raise Exception(f"OCR failed: {response.text}")
-
+        for page_data in raw_ocr_json.get("pages", []):
+            page_num_str = str(page_data.get("page_number"))
+            processed_data["page_dimensions"][page_num_str] = page_data.get("dimensions", [])
+            
+            page_content = []
+            # Process text blocks
+            for block in page_data.get("blocks", []):
+                if block.get("type") == "text":  # detected text block
+                    cleaned_text = self.clean_text(block.get("text", ""))
+                    if cleaned_text: # only add non-empty blocks
+                        page_content.append({
+                            "type": "text",
+                            "text": cleaned_text,
+                            "bbox": block.get("bbox")
+                        })
+                elif block.get("type") == "image":  # detected figure block
+                    page_content.append({
+                        "type": "image",
+                        "bbox": block.get("bbox"),
+                        "xref": block.get("xref") 
+                    })
+            
+            processed_data["pages"][page_num_str] = page_content
+            
+        return processed_data

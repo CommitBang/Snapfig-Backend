@@ -13,5 +13,5 @@ if response.status_code == 200:
         print(f"\n--- Page {i} ---")
         print(page_text)
 else:
-    print(f"❌ OCR failed: {response.status_code}")
+    print(f"OCR failed: {response.status_code}")
     print(response.text)

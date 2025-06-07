@@ -40,5 +40,5 @@ class UncaptionedImage(InteractiveElement):
 
 
 # just for type specification
-InteractiveElementList = List[Union[AnnotationLink, FigureLink]]
+InteractiveElementList = List[Union[AnnotationLink, FigureLink, UncaptionedImage]]
 # meaning InteractiveElement list comprises set of either annotationlink object or figurelink object

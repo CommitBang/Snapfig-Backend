@@ -11,12 +11,13 @@ class ParagraphGrouper:
         line_height = py1 - py0
         
         # A standard line break should have a gap less than the height of the line itself.
-        if vertical_gap < 0 or vertical_gap > (line_height * 0.8):  # might have to modify this accordingly 
-            return False
+        # In paragraph_grouper.py
+        if vertical_gap < 0 or vertical_gap > (line_height * 1.2):  # modify this according to result
+            return False    
 
         # heuristic2 : horizontally on the same line?
         horizontal_diff = abs(cx0 - px0)
-        if horizontal_diff > 30:  # modify this according to result
+        if horizontal_diff > 50:  # modify this according to result
             return False
 
         return True

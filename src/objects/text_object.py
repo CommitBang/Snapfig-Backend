@@ -20,16 +20,24 @@ class InteractiveElement:
 
 @dataclass
 class AnnotationLink(InteractiveElement):
-    # link from annotation to full text
-    element_type: str = "annotation"
-    target_text: str  # full text part which will show up on user's click
-
+    # page_num is inherited
+    target_text: str                          
+    some_optional_field: str = "default_value" 
+    
 @dataclass
 class FigureLink(InteractiveElement):
-    # link from figure reference to actual figure
-    element_type: str = "figure"
-    target_xref: int  # id of figure
-    pdf_filename: str  #filename needed to make the summarization API call.
+    target_xref: int  
+    pdf_filename: str
+    element_type: str = "figure" 
+
+@dataclass
+class UncaptionedImage(InteractiveElement):
+    # page_num and reference_bbox are inherited from InteractiveElement.
+    # to_dict() method is also inherited.
+    xref: int
+    pdf_filename: str
+    element_type: str = "uncaptioned_image"
+
 
 # just for type specification
 InteractiveElementList = List[Union[AnnotationLink, FigureLink]]

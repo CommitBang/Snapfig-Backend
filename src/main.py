@@ -1,9 +1,11 @@
+# File: Backend/src/main.py (Corrected)
+
 from flask import Flask, render_template
 from dotenv import load_dotenv
 import os
 
-from api.routes import api
-from api.utils import ensure_upload_folder
+from .api.routes import api
+from .api.utils import ensure_upload_folder
 
 # Load environment variables
 load_dotenv()
@@ -25,4 +27,4 @@ def index():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)

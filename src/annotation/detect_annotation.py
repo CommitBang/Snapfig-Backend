@@ -15,12 +15,15 @@ class AnnotationDetector:
         all_references = []
         all_definitions = {} # Maps a key (e.g., '1') to its full definition text
         
-        for page_num_str, content in processed_data.get("pages", {}).items():
-            page_num = int(page_num_str)
-            page_height = content.get("dimensions", [0, 800])[1]
+        for page_content in processed_data.get("pages", []):
+            page_num = page_content.get("page_num")
+            if page_num is None:
+                continue # skip if a page has no number
+
+            page_height = page_content.get("dimensions", [0, 800])[1]
             footnote_threshold = page_height * 0.8  # Heuristic for text at the bottom
 
-            for block in content.get("blocks", []):
+            for block in page_content.get("blocks", []):
                 text = block.get('text', '')
                 bbox = block.get('bbox', [])
 
@@ -49,7 +52,7 @@ class AnnotationDetector:
         final_links: List[AnnotationLink] = []
         for ref in all_references:
             key = ref['key']
-            if key in all_definitions:
+            if key in all_definitions and ref.get('bbox'): # Ensure bbox exists
                 link = AnnotationLink(
                     page_num=ref['page'],
                     reference_bbox=BoundingBox(

@@ -1,6 +1,6 @@
 import re
 from typing import List, Dict, Any, Optional
-from ..objects.text_object import FigureLink, BoundingBox
+from ..objects.text_object import FigureLink, BoundingBox, UncaptionedImage
 
 class FigureMapper:
     """
@@ -10,11 +10,9 @@ class FigureMapper:
     """
     def __init__(self):
         self.ref_pattern = re.compile(
-            r'(?:see|in|as shown in)\s+(Figure|Fig|Table|Chart)\.?\s+(\d+(?:\.\d+)?)', re.IGNORECASE
-        )
+            r'(?:see|in|as shown in)\s+(Figure|Fig|Table|Chart)\.?\s+(\d+(?:\.\d+)?)', re.IGNORECASE)
         self.caption_pattern = re.compile(
-            r'^(Figure|Fig|Table|Chart)\.?\s+(\d+(?:\.\d+)?[:\.\s])', re.IGNORECASE
-        )
+            r'^(Figure|Fig|Table|Chart)\.?\s+(\d+(?:\.\d+)?[:\.\s])', re.IGNORECASE)
 
     def _find_closest_image_to_caption(self, caption_bbox: List[float], image_blocks: List[Dict], page_height: float) -> Optional[Dict]:
         closest_image = None
@@ -37,14 +35,20 @@ class FigureMapper:
         all_references = []
         figure_targets = {}  # later will store key to target reference value
 
-        # look through each page to find all possible figure targets
-        for page_num_str, content in processed_data.get("pages", {}).items():
-            page_num = int(page_num_str)
-            page_dims = content.get("dimensions", [0, 800])
-            image_blocks_on_page = [b for b in content.get("blocks", []) if b.get('type') == 'image']
+        # The 'pages' field is a list of page objects. iterate through it directly.
+        for page_content in processed_data.get("pages", []):
+            page_num = page_content.get("page_num")
+            if page_num is None:
+                continue # skip if page object has no number
 
-            for block in content.get("blocks", []):
+            page_dims = page_content.get("dimensions", [0, 800])
+            image_blocks_on_page = [b for b in page_content.get("blocks", []) if b.get('type') == 'image']
+
+            for block in page_content.get("blocks", []):
                 text = block.get('text', '')
+                bbox = block.get('bbox')
+
+                if not bbox: continue
 
                 # find all references in the text like "see Figure 1.1"
                 for match in self.ref_pattern.finditer(text):
@@ -67,19 +71,42 @@ class FigureMapper:
         final_links = []  # list of FigureLink objecst
         for ref in all_references:
             key = ref['key']
-            if key in figure_targets:
+            bbox = ref.get('bbox')
+            if key in figure_targets and bbox:
                 target_xref = figure_targets[key]['xref']
                 link = FigureLink(
                     page_num=ref['page'],
                     reference_bbox=BoundingBox(
-                        x0=ref['bbox'][0], 
-                        y0=ref['bbox'][1], 
-                        x1=ref['bbox'][2], 
-                        y1=ref['bbox'][3]
+                        x0=bbox[0], 
+                        y0=bbox[1], 
+                        x1=bbox[2], 
+                        y1=bbox[3]
                     ),
                     target_xref=target_xref,
                     pdf_filename=pdf_filename
                 )
                 final_links.append(link)
                 
-        return final_links
+
+        # captures all uncaptioned or unreferenced images
+        referenced_xrefs = {link.target_xref for link in final_links}
+        other_images = []
+
+        for page_content in processed_data.get("pages", []):
+            page_num = page_content.get("page_number")
+            image_blocks = [b for b in page_content.get("blocks", []) if b.get('type') == 'image']
+            
+            for img_block in image_blocks:
+                if img_block.get('xref') not in referenced_xrefs:
+                    bbox = img_block['bbox']
+                    # create an UncaptionedImage object for interaction
+                    image = UncaptionedImage(
+                        page_num=page_num,
+                        reference_bbox=BoundingBox(x0=bbox[0], y0=bbox[1], x1=bbox[2], y1=bbox[3]),
+                        xref=img_block['xref'],
+                        pdf_filename=pdf_filename 
+                    )
+                    other_images.append(image)
+
+        # return a combined list of all interactive image elements
+        return final_links + other_images

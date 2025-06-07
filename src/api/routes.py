@@ -3,11 +3,11 @@ from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename 
 import os
 
-from services.ocr_service import OCRService
-from text_processing.preprocessor import TextPreprocessor
-from text_processing.paragraph_grouper import ParagraphGrouper
-from annotation.detect_annotation import AnnotationDetector
-from annotation.map_figure import FigureMapper
+from ..services.ocr_service import OCRService
+from ..text_processing.preprocessor import TextPreprocessor
+from ..text_processing.paragraph_grouper import ParagraphGrouper
+from ..annotation.detect_annotation import AnnotationDetector
+from ..annotation.map_figure import FigureMapper
 from .utils import summarize_text_via_service
 from .utils import summarize_figure_via_service
 
@@ -51,7 +51,11 @@ def process_pdf():
         # convert the list of objects to a list of dictionaries for JSON
         json_payload = [element.to_dict() for element in interactive_elements]
 
-        return jsonify({"interactive_elements": json_payload}), 200
+        # return both the interactive elements and the full paragraph data.
+        return jsonify({
+            "interactive_elements": json_payload,
+            "paragraph_data": paragraph_data 
+        }), 200
 
     except Exception as e:
         current_app.logger.error(f"An error occurred during PDF processing: {e}", exc_info=True)

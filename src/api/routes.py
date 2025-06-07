@@ -5,6 +5,7 @@ import os
 
 from services.ocr_service import OCRService
 from text_processing.preprocessor import TextPreprocessor
+from text_processing.paragraph_grouper import ParagraphGrouper
 from annotation.detect_annotation import AnnotationDetector
 from annotation.map_figure import FigureMapper
 from .utils import summarize_text_via_service
@@ -21,33 +22,40 @@ def process_pdf():
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
     
-    if file and file.filename.endswith('.pdf'):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+    if not file or not file.filename.endswith('.pdf'):
+        return jsonify({'error': 'Invalid file format'}), 400
         
-        try:
-            ocr_service = OCRService()
-            text_processor = TextPreprocessor()
-            annotation_detector = AnnotationDetector()
-            figure_mapper = FigureMapper()
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
 
-            raw_ocr_json = ocr_service.process_pdf(filepath)  # raw json
-            processed_data = text_processor.preprocess(raw_ocr_json)  # dictionary
-            
-            detected_annotations = annotation_detector.detect(processed_data)
-            figure_mappings = figure_mapper.map_figures(processed_data, filepath)
+    try:
+        ocr_service = OCRService()
+        raw_ocr_json = ocr_service.process_pdf(filepath)
+        
+        # group the paragraph with ocr'd result first. the result is too granular
+        grouper = ParagraphGrouper()
+        for page_data in raw_ocr_json.get("pages", []):
+            page_data["blocks"] = grouper.group(page_data.get("blocks", []))
+        
+        # raw json format turned into paragraph-wise list.
+        paragraph_data = raw_ocr_json
 
-            return jsonify({
-                "annotations": detected_annotations,
-                "figures": figure_mappings
-            }), 200
+        annotation_detector = AnnotationDetector()
+        figure_mapper = FigureMapper()
+        
+        detected_annotations = annotation_detector.detect(paragraph_data)
+        figure_mappings = figure_mapper.map_figures(paragraph_data, filename)
 
-        except Exception as e:
-            current_app.logger.error(f"An error occurred during PDF processing: {e}", exc_info=True)
-            return jsonify({'error': 'Failed to process PDF.', 'details': str(e)}), 500
-    
-    return jsonify({'error': 'Invalid file format'}), 400
+        interactive_elements = detected_annotations + figure_mappings
+        # convert the list of objects to a list of dictionaries for JSON
+        json_payload = [element.to_dict() for element in interactive_elements]
+
+        return jsonify({"interactive_elements": json_payload}), 200
+
+    except Exception as e:
+        current_app.logger.error(f"An error occurred during PDF processing: {e}", exc_info=True)
+        return jsonify({'error': 'Failed to process PDF.', 'details': str(e)}), 500
 
 @api.route('/summarize/text', methods=['POST'])
 def summarize_text_route():

@@ -20,6 +20,9 @@ wheels/
 .installed.cfg
 *.egg
 
+ocr_env/
+
+*.pyc
 # Virtual Environment
 venv/
 ENV/

@@ -52,7 +52,7 @@ class PDFProcessor:
 
     def _process_scanned_page(self, page: fitz.Page) -> List[Dict[str, Any]]:
         blocks = []
-        pix = page.get_pixmap(dpi=200)
+        pix = page.get_pixmap(dpi=150)
         image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
         np_img = np.array(image)
 
@@ -86,6 +86,7 @@ class PDFProcessor:
             
             page_data = {
                 "page_number": page_num,
+                "page_size": [page.rect.width, page.rect.height],
                 "dimensions": list(page.rect),
                 "blocks": []
             }

@@ -1,4 +1,4 @@
-from .detector import AnnotationDetector
-from .mapper import FigureMapper
+from .detect_annotation import AnnotationDetector
+from .map_figure import FigureMapper
 
 __all__ = ['AnnotationDetector', 'FigureMapper'] 

@@ -175,4 +175,4 @@ print(response.json())
 
 ---
 ## 📄 라이센스
-This project is licensed under the APACH License - see the [LICENSE](License) file for details.
+This project is licensed under the APACH License - see the [LICENSE](LICENSE) file for details.

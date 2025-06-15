@@ -3,7 +3,7 @@
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
 [![PaddleOCR](https://img.shields.io/badge/PaddleOCR-3.0+-orange.svg)](https://github.com/PaddlePaddle/PaddleOCR)
-[![License](https://img.shields.io/badge/License-APACH-yellow.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## 📖 프로젝트 소개
 
